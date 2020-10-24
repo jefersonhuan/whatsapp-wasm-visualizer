@@ -6,53 +6,57 @@ WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((resu
 function loadChart(series) {
     document.getElementById("status").style.display = "none";
     Highcharts.chart('container', {
+        lang: {
+            months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+            shortMonths: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+            weekdays: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+            loading: ['Atualizando o gráfico...aguarde'],
+            contextButtonTitle: 'Exportar gráfico',
+            decimalPoint: ',',
+            thousandsSep: '.',
+            downloadJPEG: 'Baixar imagem JPEG',
+            downloadPDF: 'Baixar arquivo PDF',
+            downloadPNG: 'Baixar imagem PNG',
+            downloadSVG: 'Baixar vetor SVG',
+            printChart: 'Imprimir gráfico',
+            rangeSelectorFrom: 'De',
+            rangeSelectorTo: 'Para',
+            rangeSelectorZoom: 'Zoom',
+            resetZoom: 'Limpar Zoom',
+            resetZoomTitle: 'Voltar Zoom para nível 1:1',
+        },
         chart: {
             zoomType: 'x'
         },
         title: {
-            text: 'Occurrence of WhatsApp messages over time'
+            text: 'Ocorrências de mensagens por tempo'
         },
         xAxis: {
             type: 'datetime'
         },
         yAxis: {
             title: {
-                text: '# of messages'
+                text: 'Número de mensagens'
             }
         },
         legend: {
             enabled: false
         },
         plotOptions: {
-            area: {
-                fillColor: {
-                    linearGradient: {
-                        x1: 0,
-                        y1: 0,
-                        x2: 0,
-                        y2: 1
-                    },
-                    stops: [
-                        [0, Highcharts.getOptions().colors[0]],
-                        [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                    ]
-                },
-                marker: {
-                    radius: 2
-                },
-                lineWidth: 1,
-                states: {
-                    hover: {
-                        lineWidth: 1
-                    }
-                },
-                threshold: null
+            column: {
+                pointPadding: 0,
+                borderWidth: 0,
+                groupPadding: 0,
+                shadow: false,
+            },
+            series: {
+                borderColor: "#303030"
             }
         },
 
         series: [{
-            type: 'area',
-            name: '# of messages',
+            type: 'column',
+            name: 'Número de mensagens',
             data: series
         }]
     });

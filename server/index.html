@@ -3,14 +3,14 @@
     <meta charset="utf-8"/>
     <title>WebAssembly + Go <3</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
     <style>
         * {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Open Sans', sans-serif;
         }
 
         body {
-            background-color: #def2ff;
+            background: url("prism.png");
             overflow-x: hidden;
             padding: 0;
             margin: 0;
@@ -20,45 +20,106 @@
             max-width: 100%;
             width: 1000px;
             display: block;
-            margin: 60px auto;
-            background-color: white;
-            padding: 30px 0;
-            box-shadow: 1px 5px 5px 1px #d7d7d7;
-            border-radius: 7px;
+            margin: 40px auto;
         }
 
         .intro-wrapper {
-            width: 800px;
-            margin: 0 auto;
+            padding: 30px;
+            border-radius: 7px;
+            background-color: white;
         }
+
+        .lds-ellipsis {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .lds-ellipsis div {
+            position: absolute;
+            top: 33px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: black;
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        .lds-ellipsis div:nth-child(1) {
+            left: 8px;
+            animation: lds-ellipsis1 0.6s infinite;
+        }
+        .lds-ellipsis div:nth-child(2) {
+            left: 8px;
+            animation: lds-ellipsis2 0.6s infinite;
+        }
+        .lds-ellipsis div:nth-child(3) {
+            left: 32px;
+            animation: lds-ellipsis2 0.6s infinite;
+        }
+        .lds-ellipsis div:nth-child(4) {
+            left: 56px;
+            animation: lds-ellipsis3 0.6s infinite;
+        }
+        @keyframes lds-ellipsis1 {
+            0% {
+                transform: scale(0);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        @keyframes lds-ellipsis3 {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(0);
+            }
+        }
+        @keyframes lds-ellipsis2 {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(24px, 0);
+            }
+        }
+
     </style>
 </head>
 <body>
 
 <div class="wrapper">
     <div class="intro-wrapper">
-        <h2 style="text-align: center">Olá aventureir@!</h2>
+        <h2 style="text-align: center">Olá, aventureir@!</h2>
         <p>
             Este é um site que visa mostrar a capacidade de uma simples aplicação rodando
             <a href="https://webassembly.org/" target="_blank">Web Assembly</a> com
             <a href="https://github.com/golang/go/wiki/WebAssembly" target="_blank">Go</a>.
             <br>
             E a função dela é bem simples: carregar conversas do WhatsApp e renderizar um gráfico mostrando
-            a relação de mensagens por período.
+            a ocorrência de mensagens diárias.
             <br><br>
-            Para testar você mesmo basta
+            Para testar basta
             <a href="https://tecnoblog.net/194147/whatsapp-salvar-historico-conversa/" target="_blank">exportar</a>
-            uma de suas conversas no botão abaixo e esperar a mágica acontecer XD
+            uma de suas conversas, escolher o arquivo no botão abaixo e esperar a mágica acontecer XD
             <small><br>Sabe a parte boa? é que o arquivo sequer é enviado a algum servidor, fica somente no seu navegador :)</small>
         </p>
-        <br>
-        <hr>
-        <br>
         <input type="file" id="file" onchange="handleFile()" />
+
+        <div id="status" style="display: none;">
+            <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+        </div>
+        <figure class="highcharts-figure">
+            <div id="container"></div>
+        </figure>
+
+        <p style="font-size: 12px">
+            Desenvolvido por <a href="https://github.com/jefersonhuan" target="_blank">@jefersonhuan</a>.
+            <br>
+            Código-fonte disponível em: <a href="https://github.com/jefersonhuan/whatsapp-wasm-visualizer" target="_blank">@jefersonhuan/whatsapp-wasm-visualizer</a>
+        </p>
     </div>
-    <figure class="highcharts-figure">
-        <div id="container"></div>
-    </figure>
 </div>
 
 <script src="https://code.highcharts.com/highcharts.js"></script>
@@ -74,6 +135,7 @@
     });
 
     function handleFile() {
+        document.getElementById("status").style.display = "block";
         const input = document.getElementById("file").files;
         const fileData = new Blob([input[0]]);
 
@@ -86,6 +148,8 @@
             for (let i = 0; i < data.length - 1; i += 2) {
                 series.push([new Date(data[i] * 1000).getTime(), data[i + 1]]);
             }
+
+            document.getElementById("status").style.display = "none";
 
             Highcharts.chart('container', {
                 chart: {

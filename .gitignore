@@ -1,4 +1,4 @@
-/conversations
+/conversations/*
 .idea/
 
 main.wasm

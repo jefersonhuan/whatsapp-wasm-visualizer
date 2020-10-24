@@ -1,11 +1,11 @@
 FROM golang:1.15 AS builder
 
-WORKDIR /usr/go/whatsapp-visualizer/server
-COPY ./server .
+WORKDIR /usr/go/whatsapp-visualizer/serve
+COPY ./serve .
 
 ENV GOOS=linux
 ENV CGO_ENABLED=0
-RUN go build serve.go
+RUN go build start.go
 
 WORKDIR /usr/go/whatsapp-visualizer
 COPY . .
@@ -18,9 +18,7 @@ FROM alpine:3.9
 
 WORKDIR /var/app
 
-COPY --from=builder /usr/go/whatsapp-visualizer/server/ .
+COPY --from=builder /usr/go/whatsapp-visualizer/serve/ .
 COPY --from=builder /usr/go/whatsapp-visualizer/main.wasm .
 
-RUN ls -l
-
-CMD ["/var/app/serve"]
+CMD ["/var/app/start"]

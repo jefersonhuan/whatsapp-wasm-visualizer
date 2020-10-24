@@ -1,62 +1,39 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"fmt"
-	"io"
-	"log"
-	"os"
-	"regexp"
+	"github.com/jefersonhuan/whatsapp-vizualizer-wasm/main/parser"
+	"syscall/js"
 	"time"
 )
 
-type Chat struct {
-	messages []string
+var c chan bool
+
+func init() {
+	c = make(chan bool)
 }
 
-func loadChat(reader io.Reader) (chat *Chat, err error) {
-	chat = &Chat{}
+func handleFileBytes(this js.Value, args []js.Value) interface{} {
+	start := time.Now()
+	var buf []byte
+	array := args[0]
 
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		if scanner.Err() != nil {
-			break
-		}
-		chat.messages = append(chat.messages, scanner.Text())
+	buf = make([]byte, array.Get("byteLength").Int())
+	js.CopyBytesToGo(buf, array)
+
+	data := parser.LoadChat(bytes.NewReader(buf)).Parse()
+	dst := js.Global().Get("Uint32Array").New(len(data))
+	for i, d := range data {
+		dst.SetIndex(i, d)
 	}
-	return
-}
-
-func (chat *Chat) parse() map[string]int {
-	result := map[string]int{}
-	datePattern := regexp.MustCompile(`^\d{1,2}/\d{1,2}/\d{2}`)
-
-	for _, line := range chat.messages {
-		if date := datePattern.FindString(line); date != "" {
-			result[date] = result[date] + 1
-		}
-	}
-	return result
+	fmt.Println("Parsing took", time.Now().Sub(start))
+	return dst
 }
 
 func main() {
-	start := time.Now()
-	fmt.Println("Initializing WhatsApp Chat parser...")
+	fmt.Println("WhatsApp Chat parser has been initialized")
 
-	file, err := os.OpenFile("./conversations/xlarge.txt", os.O_RDONLY, 044)
-	if err != nil {
-		return
-	}
-	chat, err := loadChat(file)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	result := chat.parse()
-	for k, v := range result {
-		fmt.Println(k, ":", v)
-	}
-
-	fmt.Println(len(result), "results found")
-	fmt.Println("Elapsed", time.Now().Sub(start))
+	js.Global().Set("parseChat", js.FuncOf(handleFileBytes))
+	<-c
 }

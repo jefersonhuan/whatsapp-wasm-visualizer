@@ -77,13 +77,61 @@ func TestLoadChat(t *testing.T) {
 		{
 			name:            "",
 			reader:          file,
-			wantMessagesLen: 10000,
+			wantMessagesLen: 1000,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := LoadChat(tt.reader); len(got.messages) != tt.wantMessagesLen {
 				t.Errorf("LoadChat() = %v, want %v", len(got.messages), tt.wantMessagesLen)
+			}
+		})
+	}
+}
+
+func TestLoadChatAndParse(t *testing.T) {
+	file := testFile(t)
+	got := LoadChat(file).Parse()
+	if len(got) != 2 {
+		t.Errorf("LoadChat().Parse() = %v, want 2", len(got))
+	}
+}
+
+func TestChat_Parse(t *testing.T) {
+	type fields struct {
+		messages []string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   [][]int64
+	}{
+		{
+			name:   "ignores empty lines and returns empty map",
+			fields: fields{messages: []string{"", "", "", ""}},
+			want:   [][]int64{},
+		},
+		{
+			name: "only counts lines starting with date",
+			fields: fields{
+				messages: []string{
+					"10/9/19, 14:00 - Jeferson: Lorem Lorem Lorem",
+					"Jeferson: Lorem Lorem Lorem\nMais Lorem aqui\nE mais aqui",
+					"Jeferson: E mais uma linha",
+					"11/11/19, 07:00 - Jeferson: Agora em outro dia",
+					"11/11/19, 07:01 - Jeferson: Mas duplicado",
+				},
+			},
+			want: [][]int64{{1570579200000, 1}, {1573430400000, 2}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			chat := &Chat{
+				messages: tt.fields.messages,
+			}
+			if got := chat.Parse(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parse() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -96,45 +144,6 @@ func BenchmarkLoad_Chat(b *testing.B) {
 	}
 	for n := 0; n < b.N; n++ {
 		LoadChat(file)
-	}
-}
-
-func TestChat_Parse(t *testing.T) {
-	type fields struct {
-		messages []string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   []uint32
-	}{
-		{
-			name:   "ignores empty lines and returns empty map",
-			fields: fields{messages: []string{"", "", "", ""}},
-			want:   []uint32{},
-		},
-		{
-			name: "only counts lines starting with date",
-			fields: fields{
-				messages: []string{
-					"10/9/19, 07:00 - Jeferson: Lorem Lorem Lorem",
-					"Jeferson: Lorem Lorem Lorem\nMais Lorem aqui\nE mais aqui",
-					"Jeferson: E mais uma linha",
-					"11/11/19, 07:00 - Jeferson: Agora em outro dia",
-				},
-			},
-			want: []uint32{1570579200, 1, 1573430400, 1},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			chat := &Chat{
-				messages: tt.fields.messages,
-			}
-			if got := chat.Parse(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parse() = %v, want %v", got, tt.want)
-			}
-		})
 	}
 }
 

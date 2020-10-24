@@ -21,14 +21,15 @@ func handleFileBytes(this js.Value, args []js.Value) interface{} {
 
 	buf = make([]byte, array.Get("byteLength").Int())
 	js.CopyBytesToGo(buf, array)
+	result := parser.LoadChat(bytes.NewReader(buf)).Parse()
+	fmt.Println(result)
 
-	data := parser.LoadChat(bytes.NewReader(buf)).Parse()
-	dst := js.Global().Get("Uint32Array").New(len(data))
-	for i, d := range data {
-		dst.SetIndex(i, d)
-	}
+	data := parser.Convert(result)
+	fmt.Println(data)
+
+	js.Global().Call("loadChart", data)
 	fmt.Println("Parsing took", time.Now().Sub(start))
-	return dst
+	return js.Undefined()
 }
 
 func main() {

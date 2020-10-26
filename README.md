@@ -23,10 +23,25 @@ que corresponde a um `[]interface{}`) e chamando a renderização do gráfico.
 ### Considerações
 
 Este foi apenas um experimento com WASM, mas bem interessante diga-se de passagem. Com 
-pouca complexidade foi possível ler uma conversa com mais de 40k linhas em menos de meio
-segundo, o que foi... satisfatório :)
+pouca complexidade foi possível ler uma conversa com mais de 40k linhas em menos de um segundo,
+o que foi... bem satisfatório :)
 
 A única dificuldade (ou obstáculo) foi conciliar os tipos de JS com Go sem perder
-a performance do último. Com isso, o código tem uma ordem de `O(n + y)`, sendo
+a performance do último. Com isso, o código tem uma ordem de processamento
+sequencial* de `O(n + y)`, sendo
 `n` o número de linhas no arquivo, que corresponde à decodificação inicial (devidamente
 tipada) e `y` o número de dias, que corresponde à conversão aos tipos de JavaScript.
+
+\* A exportação tem como base a ordem de chegada das mensagens no celular, dessa forma, acontece 
+uma situação como a tal:
+- Usuário A envia mensagem em 01/01/2020, às 23h50, porém perde a conexão com a internet;
+- Usuário B envia uma mensagem em 02/01/2020, às 01h03;
+- Usuário A volta a ter conexão, às 01h10, chegando finalmente a primeira mensagem
+  ao celular de B;
+- Ao exportar a primeira mensagem aparece **depois** da segunda.
+
+Para contornar isso (e é algo que pode acontecer com frequência num grupo),
+o programa tenta fazer uma busca invertida por até 100ms (o que é suficiente para a maioria
+dos casos), corrigindo a contagem final.
+
+Caso isso aconteça, é possível conferir a correção abrindo o console do navegador.

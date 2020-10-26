@@ -8,12 +8,6 @@ import (
 	"time"
 )
 
-var c chan bool
-
-func init() {
-	c = make(chan bool)
-}
-
 func handleFileBytes(this js.Value, args []js.Value) interface{} {
 	start := time.Now()
 	var buf []byte
@@ -31,6 +25,7 @@ func handleFileBytes(this js.Value, args []js.Value) interface{} {
 }
 
 func main() {
+	c := make(chan bool)
 	fmt.Println("WhatsApp Chat parser has been initialized")
 
 	js.Global().Set("parseChat", js.FuncOf(handleFileBytes))

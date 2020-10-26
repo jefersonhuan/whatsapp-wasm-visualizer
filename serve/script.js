@@ -3,7 +3,7 @@ WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((resu
     go.run(result.instance);
 });
 
-function loadChart(series) {
+function loadChart(series, numberOfMessages) {
     document.getElementById("status").style.display = "none";
     Highcharts.chart('container', {
         lang: {
@@ -60,6 +60,7 @@ function loadChart(series) {
             data: series
         }]
     });
+    document.getElementById("number-of-messages").innerText = `Foram processadas ${numberOfMessages} mensagens`
 }
 
 function handleFile() {

@@ -8,62 +8,11 @@ import (
 )
 
 func testFile(t *testing.T) *os.File {
-	f, err := os.OpenFile("./tests/conversation.txt", os.O_RDONLY, 0444)
+	f, err := os.OpenFile("./tests/large_conversation.txt", os.O_RDONLY, 0444)
 	if err != nil {
 		t.Errorf("file for tests couldn't be found: %v", err)
 	}
 	return f
-}
-
-func Test_parseDate(t *testing.T) {
-	tests := []struct {
-		name    string
-		arg     string
-		want    uint32
-		wantErr bool
-	}{
-		{
-			name:    "recognizes and returns timestamp from date as 1/2/20",
-			arg:     "1/2/20",
-			want:    1577923200,
-			wantErr: false,
-		},
-		{
-			name:    "recognizes and returns timestamp from date as 01/2/20",
-			arg:     "01/2/20",
-			want:    1577923200,
-			wantErr: false,
-		},
-		{
-			name:    "recognizes and returns timestamp from date as 1/02/20",
-			arg:     "1/02/20",
-			want:    1577923200,
-			wantErr: false,
-		},
-		{
-			name:    "recognizes and returns timestamp from date as 01/02/20",
-			arg:     "1/2/20",
-			want:    1577923200,
-			wantErr: false,
-		},
-		{
-			name:    "returns error for non-recognized format",
-			arg:     "1/322/20",
-			want:    0,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseDate(tt.arg)
-			if tt.wantErr && err == nil {
-				t.Errorf("parseDate() = wanted error, but got none")
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseDate() = %v, want %v", got, tt.want)
-			}
-		})
-	}
 }
 
 func TestLoadChat(t *testing.T) {
@@ -77,7 +26,7 @@ func TestLoadChat(t *testing.T) {
 		{
 			name:            "",
 			reader:          file,
-			wantMessagesLen: 1000,
+			wantMessagesLen: 1054,
 		},
 	}
 	for _, tt := range tests {
@@ -86,14 +35,6 @@ func TestLoadChat(t *testing.T) {
 				t.Errorf("LoadChat() = %v, want %v", len(got.messages), tt.wantMessagesLen)
 			}
 		})
-	}
-}
-
-func TestLoadChatAndParse(t *testing.T) {
-	file := testFile(t)
-	got := LoadChat(file).Parse()
-	if len(got) != 2 {
-		t.Errorf("LoadChat().Parse() = %v, want 2", len(got))
 	}
 }
 
@@ -122,7 +63,7 @@ func TestChat_Parse(t *testing.T) {
 					"11/11/19, 07:01 - Jeferson: Mas duplicado",
 				},
 			},
-			want: [][]int64{{1570579200000, 1}, {1573430400000, 2}},
+			want: [][]int64{{1570579200, 1}, {1573430400, 2}},
 		},
 	}
 	for _, tt := range tests {
@@ -137,8 +78,31 @@ func TestChat_Parse(t *testing.T) {
 	}
 }
 
+func TestConvert(t *testing.T) {
+	input := [][]int64{{1570579200, 1}, {1573430400, 2}, {1573450400, 50}}
+	got := Convert(input)
+	if len(got) != len(input) {
+		t.Errorf("Convert() = %v, want %v", len(got), len(input))
+	}
+
+	for i, d := range got {
+		intermediary := d.([]interface{})
+		if intermediary[0] != input[i][0]*1000 || intermediary[1] != input[i][1] {
+			t.Errorf("Convert() = got %v, want [%v, %v]", intermediary, input[i][0]*1000, input[i][1])
+		}
+	}
+}
+
+func TestIntegration(t *testing.T) {
+	file := testFile(t)
+	got := LoadChat(file).Parse()
+	if len(got) != 500 {
+		t.Errorf("LoadChat().Parse() = %v, want 500", len(got))
+	}
+}
+
 func BenchmarkLoad_Chat(b *testing.B) {
-	file, err := os.OpenFile("./tests/conversation.txt", os.O_RDONLY, 0444)
+	file, err := os.OpenFile("./tests/small_conversation.txt", os.O_RDONLY, 0444)
 	if err != nil {
 		b.Errorf("file for tests couldn't be found: %v", err)
 	}
